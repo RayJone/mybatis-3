@@ -23,7 +23,7 @@
     <groupId>org.mybatis</groupId>
     <artifactId>mybatis-parent</artifactId>
     <version>31</version>
-    <relativePath />
+    <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <artifactId>mybatis</artifactId>
@@ -244,7 +244,7 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>8.0.19</version>
-      <scope>test</scope>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.assertj</groupId>
