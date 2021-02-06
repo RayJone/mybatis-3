@@ -51,6 +51,7 @@ import org.apache.ibatis.session.Configuration;
 /**
  * @author Clinton Begin
  * @author Kazuki Shimizu
+ *   mybatis初始化时，将所有typeHandler注册到这个类中
  */
 public final class TypeHandlerRegistry {
 

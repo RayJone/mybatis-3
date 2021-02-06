@@ -247,6 +247,8 @@ public class ResolverUtil<T> {
     String path = getPackagePath(packageName);
 
     try {
+      //URL对象持有类的路径等file:/E:/save/ijwork/mybatis-3/target/classes/com/ray/mybatis/pojo
+      //path   其实就是/com/ray/mybatis/pojo
       List<String> children = VFS.getInstance().list(path);
       for (String child : children) {
         if (child.endsWith(".class")) {

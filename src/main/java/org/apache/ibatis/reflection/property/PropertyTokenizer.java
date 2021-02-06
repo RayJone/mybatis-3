@@ -27,8 +27,16 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
   private final String children;
 
   public PropertyTokenizer(String fullname) {
+//    <resultMap id="rm4testProTool" type="User" >
+//      <id column="id" property="id" />
+//      <result property="orders[0].items[0].name" column="item1" />
+//      <result property="orders[O].items[1].name" column="item2" />
+//    </resultMap>
+
+    //找到.的下标
     int delim = fullname.indexOf('.');
     if (delim > -1) {
+      //.之前为name,后边为子的，继续解析
       name = fullname.substring(0, delim);
       children = fullname.substring(delim + 1);
     } else {
@@ -37,8 +45,11 @@ public class PropertyTokenizer implements Iterator<PropertyTokenizer> {
     }
     indexedName = name;
     delim = name.indexOf('[');
+    //如果有[，则代表为数组的某个下标的值
     if (delim > -1) {
+      //获取数组下标
       index = name.substring(delim + 1, name.length() - 1);
+      // '['左边就是就是属性名 orders
       name = name.substring(0, delim);
     }
   }

@@ -36,7 +36,7 @@ public class GenericTokenParser {
     }
     // search open token
     int start = text.indexOf(openToken);
-    if (start == -1) {
+    if (start == -1) {  //不包含'${'  直接返回字符串
       return text;
     }
     char[] src = text.toCharArray();

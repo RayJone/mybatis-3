@@ -517,6 +517,7 @@ public class Configuration {
   }
 
   public TypeAliasRegistry getTypeAliasRegistry() {
+    //包含了double  代替Double类等别名
     return typeAliasRegistry;
   }
 

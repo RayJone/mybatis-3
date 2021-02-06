@@ -42,7 +42,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
   private static final Method privateLookupInMethod;
   private final SqlSession sqlSession;
   private final Class<T> mapperInterface;
-  private final Map<Method, MapperMethodInvoker> methodCache;
+  private final Map<Method, MapperMethodInvoker> methodCache;    //持有代理对象
 
   public MapperProxy(SqlSession sqlSession, Class<T> mapperInterface, Map<Method, MapperMethodInvoker> methodCache) {
     this.sqlSession = sqlSession;
@@ -50,6 +50,7 @@ public class MapperProxy<T> implements InvocationHandler, Serializable {
     this.methodCache = methodCache;
   }
 
+  //静态代码块，全部对象公用
   static {
     Method privateLookupIn;
     try {

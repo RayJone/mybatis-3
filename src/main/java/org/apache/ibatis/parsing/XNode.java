@@ -40,11 +40,11 @@ public class XNode {
   private final XPathParser xpathParser;
 
   public XNode(XPathParser xpathParser, Node node, Properties variables) {
-    this.xpathParser = xpathParser;
+    this.xpathParser = xpathParser;   //解析此节点的xpathParser对象
     this.node = node;
     this.name = node.getNodeName();
     this.variables = variables;
-    this.attributes = parseAttributes(node);
+    this.attributes = parseAttributes(node);  //解析此节点的属性集合，并调用PropertyParser.parse 处理其中占位符
     this.body = parseBody(node);
   }
 
@@ -322,6 +322,7 @@ public class XNode {
 
   public Properties getChildrenAsProperties() {
     Properties properties = new Properties();
+    //遍历子节点，并设置到properties(可以简单看为是hashTable)对象中，
     for (XNode child : getChildren()) {
       String name = child.getStringAttribute("name");
       String value = child.getStringAttribute("value");

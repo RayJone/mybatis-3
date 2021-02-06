@@ -47,9 +47,9 @@ import org.xml.sax.SAXParseException;
 public class XPathParser {
 
   private final Document document;
-  private boolean validation;
-  private EntityResolver entityResolver;
-  private Properties variables;
+  private boolean validation;  //是否开启验证
+  private EntityResolver entityResolver;  //加载本地DTD，默认联网加载，一般会提前设置本地加载 用得XMLMapperEntityResolver子类
+  private Properties variables;   // mybatis-config.xml 中<propteries>标签键值对集合
   private XPath xpath;
 
   public XPathParser(String xml) {
@@ -142,6 +142,7 @@ public class XPathParser {
 
   public String evalString(Object root, String expression) {
     String result = (String) evaluate(expression, root, XPathConstants.STRING);
+    //会调用PropertyParser.parse(result, variables)  处理其中的默认值
     result = PropertyParser.parse(result, variables);
     return result;
   }
@@ -201,7 +202,7 @@ public class XPathParser {
   public List<XNode> evalNodes(Object root, String expression) {
     List<XNode> xnodes = new ArrayList<>();
     NodeList nodes = (NodeList) evaluate(expression, root, XPathConstants.NODESET);
-    for (int i = 0; i < nodes.getLength(); i++) {
+    for (int i = 0; i < nodes.getLength(); i++) {  //将节点信息构造为XNode返回
       xnodes.add(new XNode(this, nodes.item(i), variables));
     }
     return xnodes;
@@ -241,29 +242,29 @@ public class XPathParser {
       factory.setExpandEntityReferences(true);
 
       DocumentBuilder builder = factory.newDocumentBuilder();
-      builder.setEntityResolver(entityResolver);
-      builder.setErrorHandler(new ErrorHandler() {
+      builder.setEntityResolver(entityResolver);  //entityResolver DTD文件
+      builder.setErrorHandler(new ErrorHandler() {//异常处理都是空实现
         @Override
-        public void error(SAXParseException exception) throws SAXException {
-          throw exception;
-        }
+      public void error(SAXParseException exception) throws SAXException {
+        throw exception;
+      }
 
-        @Override
-        public void fatalError(SAXParseException exception) throws SAXException {
-          throw exception;
-        }
+      @Override
+      public void fatalError(SAXParseException exception) throws SAXException {
+        throw exception;
+      }
 
-        @Override
-        public void warning(SAXParseException exception) throws SAXException {
-          // NOP
-        }
-      });
-      return builder.parse(inputSource);
+      @Override
+      public void warning(SAXParseException exception) throws SAXException {
+        // NOP
+      }
+    });
+      return builder.parse(inputSource);  //文档的解析，还没看
     } catch (Exception e) {
       throw new BuilderException("Error creating document instance.  Cause: " + e, e);
     }
   }
-
+  //构造器都会调用此方法，设置默认值
   private void commonConstructor(boolean validation, Properties variables, EntityResolver entityResolver) {
     this.validation = validation;
     this.entityResolver = entityResolver;

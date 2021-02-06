@@ -133,6 +133,7 @@ public class MetaClass {
   }
 
   public boolean hasSetter(String name) {
+    //根据.或[分割获取name，为什么有'['？
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
       if (reflector.hasSetter(prop.getName())) {

@@ -43,6 +43,7 @@ public class StaticSqlSource implements SqlSource {
 
   @Override
   public BoundSql getBoundSql(Object parameterObject) {
+    //讲Mapper里的SQL转换为sql语句
     return new BoundSql(configuration, sql, parameterMappings, parameterObject);
   }
 

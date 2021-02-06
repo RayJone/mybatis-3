@@ -56,6 +56,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
 
   private String currentNamespace;
   private final String resource;
+  //mapper使用的缓存，如果是cache-ref, 就不使用cache标签自己的缓存了？
   private Cache currentCache;
   private boolean unresolvedCacheRef; // issue #676
 
@@ -110,10 +111,22 @@ public class MapperBuilderAssistant extends BaseBuilder {
     try {
       unresolvedCacheRef = true;
       Cache cache = configuration.getCache(namespace);
+
+      /*
+       * 若未查找到缓存实例，此处抛出异常。这里存在两种情况导致未查找到 cache 实例，
+       * 分别如下：
+       *     1.使用者在 <cache-ref> 中配置了一个不存在的命名空间，
+       *       导致无法找到 cache 实例
+       *     2.使用者所引用的缓存实例还未创建
+       *
+       *
+       *      上述描述均为博客中的，我并没有对此处为null进行思考,需要带着更多的问题
+       */
       if (cache == null) {
         throw new IncompleteElementException("No cache for namespace '" + namespace + "' could be found.");
       }
       currentCache = cache;
+      //解决了缓存引用
       unresolvedCacheRef = false;
       return cache;
     } catch (IllegalArgumentException e) {
@@ -180,7 +193,9 @@ public class MapperBuilderAssistant extends BaseBuilder {
       Discriminator discriminator,
       List<ResultMapping> resultMappings,
       Boolean autoMapping) {
+    //如果不是namespac.id格式，则拼接为namespac.id
     id = applyCurrentNamespace(id, false);
+    //同上
     extend = applyCurrentNamespace(extend, true);
 
     if (extend != null) {
@@ -189,6 +204,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       }
       ResultMap resultMap = configuration.getResultMap(extend);
       List<ResultMapping> extendedResultMappings = new ArrayList<>(resultMap.getResultMappings());
+      //将继承的resultMap中的resultMappings都移除
       extendedResultMappings.removeAll(resultMappings);
       // Remove parent constructor if this resultMap declares a constructor.
       boolean declaresConstructor = false;
@@ -198,9 +214,11 @@ public class MapperBuilderAssistant extends BaseBuilder {
           break;
         }
       }
+      //如果当前resultMap的resultMappings中有CONSTRUCTOR,则将继承的继承的resultMap中独有的的resultMappings的CONSTRUCTOR移除
       if (declaresConstructor) {
         extendedResultMappings.removeIf(resultMapping -> resultMapping.getFlags().contains(ResultFlag.CONSTRUCTOR));
       }
+      //将继承的resultMap中独有的的resultMappings放入此resultMap的resultMappings中
       resultMappings.addAll(extendedResultMappings);
     }
     ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
@@ -431,6 +449,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
     } else {
       composites = parseCompositeColumnName(column);
     }
+    //构造器模式构造
     return new ResultMapping.Builder(configuration, property, column, javaTypeClass)
         .jdbcType(jdbcType)
         .nestedQueryId(applyCurrentNamespace(nestedSelect, true))

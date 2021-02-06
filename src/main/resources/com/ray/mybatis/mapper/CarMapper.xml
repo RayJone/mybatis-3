@@ -3,7 +3,41 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.ray.mybatis.mapper.CarMapper">
-  <select id="selectCarName" parameterType="int" resultType="String">
+
+<!--  <cache type="org.mybatis.caches.ehcache.EhcacheCache">
+    <property name="timeToIdleSeconds" value="3600"/>
+    <property name="timeToLiveSeconds" value="3600"/>
+    <property name="maxEntriesLocalHeap" value="1000"/>
+    <property name="maxEntriesLocalDisk" value="10000000"/>
+    <property name="memoryStoreEvictionPolicy" value="LRU"/>
+  </cache>-->
+
+  <cache size="512" readOnly="true" flushInterval="300" eviction="LRU" blocking="true">
+  </cache>
+  <!-- <cache-ref namespace="com.ray.mybatis.mapper.CarMapper2"/>  -->
+
+
+  <resultMap id="resultA" type="car">
+    <constructor>
+      <idArg name="id"></idArg>    <!--可以提升性能-->
+      <arg name="name"></arg>
+    </constructor>
+
+    <id property="id" column="id" ></id>
+
+    <result property="name" column="name" typeHandler="com.ray.mybatis.handler"/>
+    <association property="names" />
+    <discriminator javaType="int">
+      <case value="1">
+        <result property="name" column="name" typeHandler="com.ray.mybatis.handler"/>
+      </case>
+      <case value="2">
+        <result property="name" column="name" typeHandler="com.ray.mybatis.handler"/>
+      </case>
+    </discriminator>
+  </resultMap>
+
+  <select id="selectCarName"  parameterType="int" resultType="String">
     select name from Car where id = #{id}
   </select>
 </mapper>

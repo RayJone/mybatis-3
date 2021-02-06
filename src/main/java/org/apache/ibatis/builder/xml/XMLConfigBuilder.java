@@ -103,20 +103,63 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void parseConfiguration(XNode root) {
     try {
       // issue #117 read properties first
+      //解析properties标签
+      /*
+      * 1、将properties标签下的子节点解析放入Properties对象
+      * 2、从Resource或URL属性中获取配置
+      *    注意设置的优先级，优先级高的会覆盖低的   configuration.getVariables()  >   Resource或URL配置  > 子标签中的配置
+      * 3、将属性放入  parse对象以及configuration中
+       */
       propertiesElement(root.evalNode("properties"));
+
+      /*
+       *   解析settings标签
+       * 1、将properties标签下的子节点解析放入Properties对象
+       * 2、通过MetaClass，获取Configuration类的元信息
+       * 3、检查子节点中配置的name 在Configuration类中有没有setter方法，没有则抛出异常
+       * 4、执行结束,返回Properties
+       */
       Properties settings = settingsAsProperties(root.evalNode("settings"));
+
+      //解析vsf    解析Aliases时会用到，所以放到前边解析
       loadCustomVfs(settings);
+
+      //解析自定义日志？？    为什么不放到下边的settingsElement()方法里，因为需要提前赋值给configuration？
       loadCustomLogImpl(settings);
+
+      //解析typeAliases标签  别名  pacage包，或者具体类进行设置
+      //1、解析pacage，通过包名，获取包下的类，为URL对象（稍后探究），@Alias注解，会将package的覆盖
+      //2、类名 type    alias别名，调用TypeAliasRegistry注册中心，放到其map中
       typeAliasesElement(root.evalNode("typeAliases"));
+
+      //解析plugins标签
       pluginElement(root.evalNode("plugins"));
+
+      //解析objectFactory标签
       objectFactoryElement(root.evalNode("objectFactory"));
+
+      //解析objectWrapperFactory标签
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+
+      //解析reflectorFactory标签
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+
+      /**
+       *  将settings节点配置的属性设置到ocnfiguration对象中
+       */
       settingsElement(settings);
+
+      //解析environments标签
       // read it after objectFactory and objectWrapperFactory issue #631
       environmentsElement(root.evalNode("environments"));
+
+      //解析databaseIdProvider标签
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
+
+      //解析typeHandlers标签
       typeHandlerElement(root.evalNode("typeHandlers"));
+
+      //解析mappers标签
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -124,11 +167,15 @@ public class XMLConfigBuilder extends BaseBuilder {
   }
 
   private Properties settingsAsProperties(XNode context) {
+    //没有settings返回空对象
     if (context == null) {
       return new Properties();
     }
     Properties props = context.getChildrenAsProperties();
     // Check that all settings are known to the configuration class
+    //检查settings里配置的类是否存在,对configuration对象是已知的
+    //其实就是通过反射，获取Configuration对象的类信息，然后判断有没有这个key的setter方法，
+    // 没有的话，说明settings里配置的name和value在configration里没有，不符合规范
     MetaClass metaConfig = MetaClass.forClass(Configuration.class, localReflectorFactory);
     for (Object key : props.keySet()) {
       if (!metaConfig.hasSetter(String.valueOf(key))) {
@@ -162,6 +209,8 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : parent.getChildren()) {
         if ("package".equals(child.getName())) {
           String typeAliasPackage = child.getStringAttribute("name");
+          //通过pacage名，获取其下的对象，是URL格式的？然后放入TypeAliasRegistry工厂的map中，key为name，value为class
+          //如果有@Aliase注解，会覆盖掉pacage的配置
           configuration.getTypeAliasRegistry().registerAliases(typeAliasPackage);
         } else {
           String alias = child.getStringAttribute("alias");
@@ -169,6 +218,7 @@ public class XMLConfigBuilder extends BaseBuilder {
           try {
             Class<?> clazz = Resources.classForName(type);
             if (alias == null) {
+              //和pacage注册单个调用的是同一个方法
               typeAliasRegistry.registerAlias(clazz);
             } else {
               typeAliasRegistry.registerAlias(alias, clazz);
@@ -186,7 +236,9 @@ public class XMLConfigBuilder extends BaseBuilder {
       for (XNode child : parent.getChildren()) {
         String interceptor = child.getStringAttribute("interceptor");
         Properties properties = child.getChildrenAsProperties();
+        //resolveClass(interceptor)  根据别名去别名注册类获取interceptor    否则通过Resources.classForName(string)加载
         Interceptor interceptorInstance = (Interceptor) resolveClass(interceptor).getDeclaredConstructor().newInstance();
+        //调用拦截器的setProperties覆写方法
         interceptorInstance.setProperties(properties);
         configuration.addInterceptor(interceptorInstance);
       }
@@ -221,8 +273,11 @@ public class XMLConfigBuilder extends BaseBuilder {
 
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
+      //获取子元素作为properties对象
       Properties defaults = context.getChildrenAsProperties();
+      //获取resource属性  db.properties 这种配置文件
       String resource = context.getStringAttribute("resource");
+      //获取url属性  网络文件
       String url = context.getStringAttribute("url");
       if (resource != null && url != null) {
         throw new BuilderException("The properties element cannot specify both a URL and a resource based property file reference.  Please specify one or the other.");
@@ -277,8 +332,11 @@ public class XMLConfigBuilder extends BaseBuilder {
       }
       for (XNode child : context.getChildren()) {
         String id = child.getStringAttribute("id");
+        //isSpecifiedEnvironment 如果Id 等于default，则返回true
         if (isSpecifiedEnvironment(id)) {
+          //解析transactionManager  事务管理器，和Plugins类似，先去别名获取类，否则反射创建实例
           TransactionFactory txFactory = transactionManagerElement(child.evalNode("transactionManager"));
+          //dataSource  数据源工厂，POOLED其实就是PooledDataSourceFactory类的别名   和Plugins类似，先去别名获取类，否则反射创建实例
           DataSourceFactory dsFactory = dataSourceElement(child.evalNode("dataSource"));
           DataSource dataSource = dsFactory.getDataSource();
           Environment.Builder environmentBuilder = new Environment.Builder(id)
@@ -361,6 +419,7 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void mapperElement(XNode parent) throws Exception {
     if (parent != null) {
       for (XNode child : parent.getChildren()) {
+        //解析自动扫描包
         if ("package".equals(child.getName())) {
           String mapperPackage = child.getStringAttribute("name");
           configuration.addMappers(mapperPackage);
@@ -368,6 +427,7 @@ public class XMLConfigBuilder extends BaseBuilder {
           String resource = child.getStringAttribute("resource");
           String url = child.getStringAttribute("url");
           String mapperClass = child.getStringAttribute("class");
+          //resource配置
           if (resource != null && url == null && mapperClass == null) {
             ErrorContext.instance().resource(resource);
             InputStream inputStream = Resources.getResourceAsStream(resource);

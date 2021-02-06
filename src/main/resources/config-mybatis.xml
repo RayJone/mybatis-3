@@ -3,15 +3,36 @@
   PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+  <properties resource="db.properties" >
+    <!-- 开启默认属性-->
+    <property name="org.apache.ibatis.parsing.PropertyParser.enable-default-value" value="true"/>
+  </properties>
+ <!-- <settings>
+    <setting name="logImpl" value="com.ray.log.RayLog"/>
+    <setting name="vfsImpl" value="com.ray.vsf.VfsImpl"/>
+  </settings>  -->
+
   <!--得放在environments前面，有顺序要求-->
   <typeAliases>
     <package name="com.ray.mybatis.pojo"/>
+    <!-- <typeAlias type="com.ray.mybatis.pojo.Car" alias="car"></typeAlias> -->
   </typeAliases>
+
+  <typeHandlers>
+    <typeHandler handler="com.ray.mybatis.handler.NameHandler" javaType="com.ray.mybatis.pojo.NameEnum" jdbcType="INT"></typeHandler>
+  </typeHandlers>
+
+  <plugins>
+    <plugin interceptor="com.ray.mybatis.intecepter.RayInterceptor" >
+      <property name="key" value="value"/>
+    </plugin>
+  </plugins>
   <environments default="development">
     <environment id="development">
       <transactionManager type="JDBC"/>
       <dataSource type="POOLED">
-        <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="driver" value="${jdbc.driver:driverClass}"/>
+        <!--<property name="driver" value="com.mysql.cj.jdbc.Driver"/>-->
         <property name="url" value="jdbc:mysql://192.168.51.104:3306/mybbs?serverTimezone=GMT%2B8&amp;characterEncoding=utf-8"/>
         <property name="username" value="root"/>
         <property name="password" value="1234"/>
@@ -22,6 +43,7 @@
   <mappers>
     <mapper resource="com/ray/mybatis/mapper/CarMapper.xml"/>
   </mappers>
+
 
 </configuration>
 

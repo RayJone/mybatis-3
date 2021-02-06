@@ -31,12 +31,12 @@ import org.xml.sax.SAXException;
  * @author Eduardo Macarron
  */
 public class XMLMapperEntityResolver implements EntityResolver {
-
+  //mybatis-config.xml文件和映射对应的DTD 的SystemId
   private static final String IBATIS_CONFIG_SYSTEM = "ibatis-3-config.dtd";
   private static final String IBATIS_MAPPER_SYSTEM = "ibatis-3-mapper.dtd";
   private static final String MYBATIS_CONFIG_SYSTEM = "mybatis-3-config.dtd";
   private static final String MYBATIS_MAPPER_SYSTEM = "mybatis-3-mapper.dtd";
-
+  //文件的具体位置
   private static final String MYBATIS_CONFIG_DTD = "org/apache/ibatis/builder/xml/mybatis-3-config.dtd";
   private static final String MYBATIS_MAPPER_DTD = "org/apache/ibatis/builder/xml/mybatis-3-mapper.dtd";
 
@@ -55,8 +55,9 @@ public class XMLMapperEntityResolver implements EntityResolver {
   @Override
   public InputSource resolveEntity(String publicId, String systemId) throws SAXException {
     try {
-      if (systemId != null) {
+      if (systemId != null) {   //通过systemId,去查找config的DTD，还是mapper的DTD
         String lowerCaseSystemId = systemId.toLowerCase(Locale.ENGLISH);
+        //  systemId是这种http://mybatis.org/dtd/mybatis-3-config.dtd,所以下边用得contains包含
         if (lowerCaseSystemId.contains(MYBATIS_CONFIG_SYSTEM) || lowerCaseSystemId.contains(IBATIS_CONFIG_SYSTEM)) {
           return getInputSource(MYBATIS_CONFIG_DTD, publicId, systemId);
         } else if (lowerCaseSystemId.contains(MYBATIS_MAPPER_SYSTEM) || lowerCaseSystemId.contains(IBATIS_MAPPER_SYSTEM)) {
@@ -75,8 +76,8 @@ public class XMLMapperEntityResolver implements EntityResolver {
       try {
         InputStream in = Resources.getResourceAsStream(path);
         source = new InputSource(in);
-        source.setPublicId(publicId);
-        source.setSystemId(systemId);
+        source.setPublicId(publicId);  //"-//mybatis.org//DTD Config 3.0//EN"这种
+        source.setSystemId(systemId);  //  systemId是这种http://mybatis.org/dtd/mybatis-3-config.dtd
       } catch (IOException e) {
         // ignore, null is ok
       }

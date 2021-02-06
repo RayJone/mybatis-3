@@ -34,7 +34,7 @@ import org.apache.ibatis.session.SqlSession;
 public class MapperRegistry {
 
   private final Configuration config;
-  private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();
+  private final Map<Class<?>, MapperProxyFactory<?>> knownMappers = new HashMap<>();  //map代理对象工厂map
 
   public MapperRegistry(Configuration config) {
     this.config = config;
@@ -58,12 +58,13 @@ public class MapperRegistry {
   }
 
   public <T> void addMapper(Class<T> type) {
-    if (type.isInterface()) {
-      if (hasMapper(type)) {
+    if (type.isInterface()) {//是接口
+      if (hasMapper(type)) {//存在则抛出异常
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        //将mapper代理工厂对象放入knownMappers集合中
         knownMappers.put(type, new MapperProxyFactory<>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the
@@ -99,6 +100,7 @@ public class MapperRegistry {
    * @since 3.2.2
    */
   public void addMappers(String packageName, Class<?> superType) {
+    //扫描包目录下对应的mapper接口
     ResolverUtil<Class<?>> resolverUtil = new ResolverUtil<>();
     resolverUtil.find(new ResolverUtil.IsA(superType), packageName);
     Set<Class<? extends Class<?>>> mapperSet = resolverUtil.getClasses();
@@ -112,6 +114,7 @@ public class MapperRegistry {
    *
    * @param packageName
    *          the package name
+   *          //扫描包目录下的所有mapper接口
    * @since 3.2.2
    */
   public void addMappers(String packageName) {
